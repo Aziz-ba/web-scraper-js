@@ -9,9 +9,9 @@ A small but **robust, reusable Node.js web scraper**. Point it at a URL, give it
 ## ✨ Features
 
 - 🔁 **Retries with exponential backoff** and per-request **timeout** (AbortController)
-- 🧠 **Content-type aware** — JSON is parsed, HTML becomes a DOM you can query
-- 🖥️ **CLI** — scrape any CSS selector to stdout or a JSON file, no code required
-- 🧪 **Tested** — deterministic Jest suite (fetch mocked with fixtures)
+- 🧠 **Content-type aware** - JSON is parsed, HTML becomes a DOM you can query
+- 🖥️ **CLI** - scrape any CSS selector to stdout or a JSON file, no code required
+- 🧪 **Tested** - deterministic Jest suite (fetch mocked with fixtures)
 - 🪶 One dependency (`jsdom`)
 
 ---
