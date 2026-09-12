@@ -1,39 +1,54 @@
 const { JSDOM } = require("jsdom");
 
 /**
- * A small, reusable web scraper.
+ * A small, reusable web scraper with retries and timeouts.
  *
- *   new Scraper({ url, processData }).run()
+ *   const data = await new Scraper({ url, processData, retries, timeout }).run();
  *
- * It fetches `url`, and depending on the response content-type hands your
- * `processData` callback either:
- *   - a parsed object (for application/json), or
- *   - a JSDOM instance (for text/html) — use `dom.window.document`.
- *
- * Uses the built-in fetch (Node 18+), so redirects and gzip/br are handled.
+ * `processData` receives a parsed object (JSON responses) or a JSDOM instance
+ * (HTML responses — use `dom.window.document`).
  */
 class Scraper {
-  constructor({ url, processData }) {
+  constructor({ url, processData, retries = 3, timeout = 10000, headers = {} }) {
     if (!url) throw new Error("Scraper: `url` is required");
     if (typeof processData !== "function") throw new Error("Scraper: `processData` must be a function");
-    this.url = url;
-    this.processData = processData;
+    Object.assign(this, { url, processData, retries, timeout, headers });
+  }
+
+  async _fetch() {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeout);
+    try {
+      return await fetch(this.url, {
+        signal: controller.signal,
+        headers: { "User-Agent": "web-scraper-js", ...this.headers },
+      });
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   async run() {
-    const res = await fetch(this.url, { headers: { "User-Agent": "web-scraper-js" } });
-    if (!res.ok) throw new Error(`Request failed: ${res.status} ${res.statusText}`);
-
-    const type = res.headers.get("content-type") || "";
-    let data;
-    if (type.includes("application/json")) {
-      data = await res.json();
-    } else if (type.includes("text/html")) {
-      data = new JSDOM(await res.text());
-    } else {
-      data = await res.text();
+    let lastErr;
+    for (let attempt = 1; attempt <= this.retries; attempt++) {
+      try {
+        const res = await this._fetch();
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+        const type = res.headers.get("content-type") || "";
+        let data;
+        if (type.includes("application/json")) data = await res.json();
+        else if (type.includes("text/html")) data = new JSDOM(await res.text());
+        else data = await res.text();
+        return this.processData(data);
+      } catch (err) {
+        lastErr = err;
+        if (attempt < this.retries) {
+          const backoff = 300 * 2 ** (attempt - 1); // 300ms, 600ms, ...
+          await new Promise((r) => setTimeout(r, backoff));
+        }
+      }
     }
-    return this.processData(data);
+    throw new Error(`Scrape failed after ${this.retries} attempts: ${lastErr.message}`);
   }
 }
 

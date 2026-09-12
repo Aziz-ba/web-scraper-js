@@ -1,14 +1,16 @@
 {
   "name": "web-scraper-js",
-  "version": "1.0.0",
-  "description": "A small, reusable Node.js web scraper that fetches a URL and processes HTML (via jsdom) or JSON with a custom callback.",
+  "version": "2.0.0",
+  "description": "A reusable Node.js web scraper (fetch + jsdom) with retries, timeouts, a CLI and tests.",
   "main": "scraper.js",
+  "bin": { "web-scraper-js": "cli.js" },
   "scripts": {
-    "example": "node examples/http-status-codes.js"
+    "example": "node examples/http-status-codes.js",
+    "quotes": "node examples/quotes.js",
+    "test": "jest"
   },
   "author": "Aziz BENAYED",
   "license": "MIT",
-  "dependencies": {
-    "jsdom": "^24.1.0"
-  }
+  "dependencies": { "jsdom": "^24.1.0" },
+  "devDependencies": { "jest": "^29.7.0" }
 }
