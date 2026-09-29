@@ -2,7 +2,7 @@
 
 A small but **robust, reusable Node.js web scraper**. Point it at a URL, give it a `processData` callback, and it returns a parsed **JSON** object or a queryable **JSDOM** document. Built on native `fetch`, with **retries + exponential backoff**, **timeouts**, a **CLI**, and **tests**.
 
-![tests](https://img.shields.io/badge/tests-3%20passing-brightgreen?style=flat-square)
+![tests](https://img.shields.io/badge/tests-5%20passing-brightgreen?style=flat-square)
 
 ---
 

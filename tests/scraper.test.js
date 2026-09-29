@@ -38,4 +38,22 @@ describe("Scraper", () => {
     ).rejects.toThrow(/failed after 2 attempts/);
     expect(global.fetch).toHaveBeenCalledTimes(2);
   });
+
+  test("succeeds after a transient failure", async () => {
+    let call = 0;
+    global.fetch = jest.fn(async () => {
+      call += 1;
+      if (call === 1) return { ok: false, status: 503, statusText: "unavailable", headers: { get: () => "" } };
+      return { ok: true, status: 200, statusText: "OK", headers: { get: () => "application/json" }, json: async () => ({ a: 42 }) };
+    });
+    const data = await new Scraper({ url: "https://x", processData: (d) => d.a, retries: 3, timeout: 100 }).run();
+    expect(data).toBe(42);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  test("returns raw text for an unrecognized content-type", async () => {
+    global.fetch = mockFetch("plain body", { type: "text/plain" });
+    const data = await new Scraper({ url: "https://x", processData: (d) => d }).run();
+    expect(data).toBe("plain body");
+  });
 });
